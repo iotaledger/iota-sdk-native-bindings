@@ -1,19 +1,19 @@
 [package]
-name = "iota-sdk-native"
+name = "iota-sdk-native-bindings"
 version = "0.1.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
 description = "Native wrapper for the IOTA SDK library"
 documentation = "https://wiki.iota.org/iota-sdk/welcome"
 homepage = "https://www.iota.org/"
-repository = "https://github.com/iotaledger/iota-sdk"
+repository = "https://github.com/iotaledger/iota-sdk-native-bindings"
 license = "Apache-2.0"
 keywords = [ "iota", "client", "wallet", "transaction", "native" ]
 categories = [ "cryptography::cryptocurrencies" ]
 publish = false
 
 [lib]
-name = "iota_sdk_native"
+name = "iota_sdk"
 crate-type = [ "cdylib" ]
 doc = false
 
@@ -22,7 +22,7 @@ default = ["std"]
 std = ["zeroize/std"]
 
 [dependencies]
-iota-sdk-bindings-core = { git = "https://github.com/iotaledger/iota-sdk.git", branch = "develop", default-features = false, features = [ 
+iota-sdk-bindings-core = { git = "https://github.com/iotaledger/iota-sdk.git", rev = "8f57f0c50f555b5e62f78ebf0177fc71b78f0396", default-features = false, features = [ 
     "events", 
     "rocksdb", 
     "ledger_nano", 
