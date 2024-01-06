@@ -22,7 +22,7 @@ default = ["std"]
 std = ["zeroize/std"]
 
 [dependencies]
-iota-sdk-bindings-core = { git = "https://github.com/iotaledger/iota-sdk.git", rev = "8f57f0c50f555b5e62f78ebf0177fc71b78f0396", default-features = false, features = [ 
+iota-sdk-bindings-core = { git = "https://github.com/iotaledger/iota-sdk.git", branch = "develop", default-features = false, features = [ 
     "events", 
     "rocksdb", 
     "ledger_nano", 
