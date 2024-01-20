@@ -118,22 +118,22 @@ unsafe fn internal_listen_wallet(
     };
 
     let events_string = CStr::from_ptr(events_ptr).to_str().unwrap();
-    let rust_events = serde_json::from_str::<Vec<String>>(events_string);
+    let rust_events = serde_json::from_str::<Vec<u8>>(events_string);
 
-    if rust_events.is_err() {
+    if let Err(e) = rust_events {
+        debug!("Error parsing events: {e:?}");
         return Ok(false);
     }
 
     let mut wallet_events: Vec<WalletEventType> = Vec::new();
-    for event in rust_events.unwrap() {
-        let event = match serde_json::from_str::<WalletEventType>(&event) {
-            Ok(event) => event,
+    for event_num in rust_events.unwrap() {
+        match WalletEventType::try_from(event_num) {
+            Ok(event) => wallet_events.push(event),
             Err(e) => {
-                debug!("Wrong event to listen! {e:?}");
+                debug!("Invalid event type: {e}");
                 return Ok(false);
             }
         };
-        wallet_events.push(event);
     }
 
     crate::block_on(async {
