@@ -118,22 +118,26 @@ unsafe fn internal_listen_wallet(
     };
 
     let events_string = CStr::from_ptr(events_ptr).to_str().unwrap();
-    let rust_events = serde_json::from_str::<Vec<String>>(events_string);
+    let rust_events = serde_json::from_str::<Vec<u8>>(events_string);
 
     if rust_events.is_err() {
         return Ok(false);
     }
 
-    let mut wallet_events: Vec<WalletEventType> = Vec::new();
-    for event in rust_events.unwrap() {
-        let event = match serde_json::from_str::<WalletEventType>(&event) {
-            Ok(event) => event,
+    let rust_events_unwrapped =  rust_events.unwrap();
+
+    let mut event_types: Vec<WalletEventType> = Vec::with_capacity(rust_events_unwrapped.len());
+    for event_id in rust_events_unwrapped {
+        let wallet_event_type =
+            WalletEventType::try_from(event_id);
+
+        match wallet_event_type {
+            Ok(event) => event_types.push(event),
             Err(e) => {
-                debug!("Wrong event to listen! {e:?}");
-                return Ok(false);
+                set_last_error(Error { error: e });
+                false;
             }
-        };
-        wallet_events.push(event);
+        }
     }
 
     crate::block_on(async {
@@ -143,7 +147,7 @@ unsafe fn internal_listen_wallet(
             .await
             .as_ref()
             .expect("wallet got destroyed")
-            .listen(wallet_events, move |event_data| {
+            .listen(event_types, move |event_data| {
                 if let Ok(event_str) = serde_json::to_string(event_data) {
                     let s = CString::new(event_str).unwrap();
                     handler(s.into_raw())
