@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-13, ubuntu-20.04, windows-2022]
+        os: [macos-13, macos-13-arm, ubuntu-20.04, windows-2022]
 
     steps:
       - uses: actions/checkout@v3
@@ -24,7 +24,7 @@ jobs:
 
       - name: Select Xcode
         uses: maxim-lobanov/setup-xcode@v1
-        if: matrix.os == 'macos-13'
+        if: matrix.os == 'macos-13' || matrix.os == 'macos-13-arm'
         with:
           xcode-version: '14.3'
 
@@ -47,11 +47,11 @@ jobs:
 
       - name: Set deployment target (macOS)
         run: echo "MACOSX_DEPLOYMENT_TARGET=10.14" >> $GITHUB_ENV
-        if: matrix.os == 'macos-13'
+        if: matrix.os == 'macos-13' || matrix.os == 'macos-13-arm'
 
       - name: Get current date
         run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
-        if: matrix.os == 'macos-13' || ${{ startsWith(matrix.os, 'ubuntu') }}
+        if: matrix.os == 'macos-13' || matrix.os == 'macos-13-arm' || ${{ startsWith(matrix.os, 'ubuntu') }}
 
       - name: Get current date
         if: matrix.os == 'windows-2022'
