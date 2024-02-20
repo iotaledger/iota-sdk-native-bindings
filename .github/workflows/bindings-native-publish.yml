@@ -94,6 +94,14 @@ jobs:
 
       - name: Cargo build
         run: cargo build --release        
+
+      - name: Rename file (MacOS/arm64)
+        run: mv target/release/libiota_sdk.dylib target/release/libiota_sdk_arm64.dylib
+        if: matrix.os == 'macos-13-xlarge'
+
+      - name: Rename file (MacOS/amd64)
+        run: mv target/release/libiota_sdk.dylib target/release/libiota_sdk_amd64.dylib
+        if: matrix.os == 'macos-13'
           
       - name: Upload package to Github release
         uses: softprops/action-gh-release@v1
@@ -102,6 +110,8 @@ jobs:
           files: | 
             target/release/libiota_sdk.so
             target/release/iota_sdk.dll
-            target/release/libiota_sdk.dylib
+            target/release/libiota_sdk_arm64.dylib
+            target/release/libiota_sdk_amd64.dylib
+
           fail_on_unmatched_files: false
           tag_name: ${{ steps.prepare_release.outputs.tag_name }}
