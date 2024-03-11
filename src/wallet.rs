@@ -112,28 +112,34 @@ unsafe fn internal_listen_wallet(
     events_ptr: *const c_char,
     handler: extern "C" fn(*const c_char),
 ) -> Result<bool> {
+    log::debug!("ON LISTEN WALLET BEGIN");
+
     let wallet = {
         assert!(!wallet_ptr.is_null());
         &mut *wallet_ptr
     };
 
     let events_string = CStr::from_ptr(events_ptr).to_str().unwrap();
-    let rust_events = serde_json::from_str::<Vec<String>>(events_string);
+    let rust_events = serde_json::from_str::<Vec<u8>>(events_string);
 
     if rust_events.is_err() {
-        return Ok(false);
+        return Err(Error {error: rust_events.unwrap_err().to_string() });
     }
 
-    let mut wallet_events: Vec<WalletEventType> = Vec::new();
-    for event in rust_events.unwrap() {
-        let event = match serde_json::from_str::<WalletEventType>(&event) {
-            Ok(event) => event,
+    let rust_events_unwrapped =  rust_events.unwrap();
+    log::debug!("ON LISTEN WALLET");
+
+    let mut event_types: Vec<WalletEventType> = Vec::with_capacity(rust_events_unwrapped.len());
+    for event_id in rust_events_unwrapped {
+        let wallet_event_type =
+            WalletEventType::try_from(event_id);
+
+        match wallet_event_type {
+            Ok(event) => event_types.push(event),
             Err(e) => {
-                debug!("Wrong event to listen! {e:?}");
-                return Ok(false);
+                return Err(Error { error: e });
             }
-        };
-        wallet_events.push(event);
+        }
     }
 
     crate::block_on(async {
@@ -143,13 +149,16 @@ unsafe fn internal_listen_wallet(
             .await
             .as_ref()
             .expect("wallet got destroyed")
-            .listen(wallet_events, move |event_data| {
+            .listen(event_types, move |event_data| {
                 if let Ok(event_str) = serde_json::to_string(event_data) {
                     let s = CString::new(event_str).unwrap();
+
+                    log::debug!("Calling handler");
+
                     handler(s.into_raw())
                 }
             })
-            .await
+            .await;
     });
 
     Ok(true)
